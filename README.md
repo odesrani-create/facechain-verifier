@@ -1,231 +1,228 @@
 # FaceChain Verifier
 
-FaceChain Verifier is a command-line proof-of-concept for **Face Identification & Blockchain Verification**.
+FaceChain Verifier is a command-line proof of concept that combines face
+embedding, reverse-image search, similarity checking, and a local blockchain
+record.
 
-It demonstrates this pipeline:
+> **Important:** This project is for authorized testing, demonstrations, and
+> educational use. A similarity score is not proof of a person’s identity.
 
-```text
-Input Image
-    ↓
-Face Detection + 512-D Face Encoding
-    ↓
-Google Lens Reverse Image Search
-    ↓
-Candidate Social/Web Results
-    ↓
-Independent Face Similarity Verification
-    ↓
-SHA-256 Fingerprint
-    ↓
-Local Blockchain Record
-    ↓
-Blockchain Re-verification
-What it does
+## What the project does
 
-Given an input image containing a face, FaceChain Verifier:
+For an image containing a detectable face, the `verify` command performs this
+workflow:
 
-Detects and encodes the face using InsightFace.
-Publishes the input image temporarily through a Cloudflare Quick Tunnel.
-Uses SerpApi with Google Lens for genuine reverse-image search.
-Downloads candidate result thumbnails.
-Compares candidate faces against the input embedding.
-Selects a verified matching result.
-Creates a deterministic SHA-256 fingerprint of the verification record.
-Stores the fingerprint and record in a local hash-linked blockchain.
-Re-verifies the blockchain block to demonstrate tamper detection.
-Example
-facechain verify ~/Pictures/testing.jpeg
+1. Detects the face and creates a 512-dimensional embedding with InsightFace.
+2. Starts a temporary local image server.
+3. Creates a temporary Cloudflare Quick Tunnel so Google Lens can access the
+   image URL.
+4. Sends the image URL to Google Lens through SerpApi.
+5. Downloads candidate result thumbnails and compares their faces with the
+   input face.
+6. Selects the first candidate that passes the similarity threshold.
+7. Creates a deterministic SHA-256 fingerprint for the verification record.
+8. Stores the record in a local hash-linked blockchain and verifies the block.
 
-Example result:
+The tunnel and local image server are stopped automatically when the command
+finishes.
 
-FACE ANALYSIS
-✓ Face detected
-✓ Confidence: 86.24%
-✓ Embedding: 512 dimensions
+## Requirements
 
-WEB SEARCH
-✓ Provider: Google Lens / SerpApi
-✓ Visual matches: 60
+- Python 3.10 or newer
+- A working internet connection
+- A SerpApi account and API key
+- `cloudflared` installed and available on your `PATH`
+- A CPU-capable machine (a GPU is not required)
+- An image file containing a clear, visible face
 
-BEST MATCH
-✓ Source: LinkedIn
-✓ Similarity: 0.8520
-✓ Match: FACE VERIFIED
+## Installation
 
-BLOCKCHAIN
-✓ SHA-256 fingerprint generated
-✓ Block created
-✓ Blockchain hash: VALID
-✓ Previous hash: VALID
-✓ Re-verification: VALID
-Project structure
-facechain-verifier/
-├── config/
-│   └── settings.py
-├── src/
-│   ├── blockchain/
-│   │   ├── fingerprint.py
-│   │   └── local_chain.py
-│   ├── cli/
-│   │   └── ui.py
-│   ├── face/
-│   │   ├── detector.py
-│   │   └── encoder.py
-│   ├── search/
-│   │   ├── image_server.py
-│   │   └── web_search.py
-│   └── verification/
-│       ├── candidate.py
-│       ├── matcher.py
-│       └── verifier.py
-├── .env.example
-├── .gitignore
-├── requirements.txt
-├── run.py
-└── facechain
-Requirements
-Python 3.10+
-Internet connection
-SerpApi API key
-Cloudflare cloudflared
-CPU-capable environment
-Installation
-
-Clone the repository:
-
-git clone https://github.com/odesrani-create/facechain-verifier.git
-cd facechain-verifier
-
-Create a virtual environment:
-
-python3 -m venv .venv
-source .venv/bin/activate
-
-Install Python dependencies:
-
-pip install -r requirements.txt
-
-Install cloudflared and ensure it is available in your PATH.
-
-Create configuration:
-
-cp .env.example .env
-
-Edit .env and add your SerpApi key:
-
-SERPAPI_API_KEY=your_key_here
-Usage
-
-Full verification:
-
-facechain verify ./image.jpg
-
-Reverse-image search only:
-
-facechain search ./image.jpg
-
-The verify command automatically starts and stops the temporary local image server and Cloudflare tunnel. No additional terminal windows are required.
-
-Blockchain
-
-The current implementation uses a lightweight local hash-linked blockchain stored in:
-
-data/blockchain.json
-
-Each block contains:
-
-block index
-timestamp
-previous block hash
-verification data
-current SHA-256 block hash
-
-The fingerprint is generated from canonical JSON so the same verification record produces the same SHA-256 value.
-
-This is a demonstration blockchain, not a public decentralized network.
-
-Search provider
-
-The current implementation uses:
-
-SerpApi → Google Lens
-
-The search provider is isolated through configuration so another provider can be added later without redesigning the whole pipeline.
-
-Limitations
-Google Lens results can change between searches.
-Some result thumbnails may be unavailable or protected.
-Face similarity is probabilistic and depends on image quality, pose, lighting, and model behavior.
-A face similarity match must not be treated as definitive legal identity proof.
-The current blockchain is local and is not decentralized.
-Cloudflare Quick Tunnels are temporary and are used only to make the input image accessible to the reverse-image-search service.
-Search APIs have usage limits and may require a paid plan depending on volume.
-Responsible use
-
-Use this project only with images and data you are authorized to process.
-
-For demonstrations, testing, and submissions, prefer your own images or public/consenting test data. Do not use the system to identify private individuals without appropriate authorization.
-
-Hackathon scope
-
-This project implements the required proof-of-concept flow:
-
-Face Scan
-→ Web/Social Search
-→ Matching Post
-→ Face Verification
-→ Blockchain Fingerprint
-→ Blockchain Verification
-
-No web application is required for the core demonstration.
-
-License
-
-This project is provided for educational and hackathon demonstration purposes.
-EOF
-
-Make sure generated runtime data is not committed
-
-cat > .gitignore <<'EOF'
-.env
-.venv/
-pycache/
-*.pyc
-data/blockchain.json
-data/candidates/
-EOF
-
-Check what will be committed
-
-git status
-
-Inspect tracked/untracked files
-
-git status --short
-
-Add the final project
-
-git add .gitignore README.md requirements.txt .env.example config run.py facechain src
-
-Commit
-
-git commit -m "Complete FaceChain verification pipeline"
-
-Push
-
-git push origin main
-
-
-After that, verify:
+### 1. Get the code
 
 ```bash
-git status
-git log -1 --oneline
+git clone https://github.com/odesrani-create/facechain-verifier.git
+cd facechain-verifier
+```
 
-You should end with:
+### 2. Create a virtual environment
 
-nothing to commit, working tree clean
+Linux and macOS:
 
-and your latest commit should be on main.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-One important point: your successful 0.8520 face similarity + real LinkedIn result + valid blockchain re-verification is the evidence I would use in the screen recording.
+Windows PowerShell:
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install Python packages
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+### 4. Install Cloudflare `cloudflared`
+
+Install the `cloudflared` command using the instructions for your operating
+system in the [Cloudflare documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+
+Check that it is available:
+
+```bash
+cloudflared --version
+```
+
+### 5. Configure SerpApi
+
+Create a local environment file from the template:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and set your key:
+
+```dotenv
+SERPAPI_API_KEY=your_serpapi_key_here
+```
+
+Do not commit `.env` or share the API key. The `.gitignore` file is intended
+to keep it out of Git.
+
+## Running the project
+
+From the project root, use the following portable command format:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python run.py verify ./path/to/image.jpg
+```
+
+For example:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python run.py verify ~/Pictures/testing.jpeg
+```
+
+The command prints sections for face analysis, web search, face verification,
+the best match, and blockchain verification. A successful run ends with a
+valid blockchain re-verification message.
+
+### Search without face verification
+
+To run the reverse-image search and print the first results without creating a
+blockchain record:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python run.py search ./path/to/image.jpg
+```
+
+### Windows PowerShell
+
+Set the Python import path for the current PowerShell session, then run the
+same commands:
+
+```powershell
+$env:PYTHONPATH = "$PWD\src;$PWD"
+python run.py verify .\path\to\image.jpg
+```
+
+## Output and stored data
+
+The verifier creates runtime data under `data/`:
+
+- `data/blockchain.json` contains the local hash-linked blockchain.
+- Candidate images may be stored under `data/candidates/` during processing.
+
+Each blockchain block includes an index, timestamp, previous block hash,
+verification record, and current block hash. This is a local demonstration of
+tamper-evident hashing. It is not a public or decentralized blockchain.
+
+## Project structure
+
+```text
+facechain-verifier/
+├── config/settings.py       # Loads values from .env
+├── run.py                   # Command-line entry point
+├── facechain                 # Shell launcher with a configurable project path
+├── src/
+│   ├── face/                # Face detection and embeddings
+│   ├── search/              # Image hosting and SerpApi/Google Lens search
+│   ├── verification/        # Candidate downloading and face comparison
+│   ├── blockchain/           # Fingerprints and local chain
+│   └── cli/                  # Terminal output formatting
+├── .env.example             # Configuration template
+├── requirements.txt         # Python dependencies
+└── data/                    # Runtime output, created as needed
+```
+
+## Troubleshooting
+
+### `SERPAPI_API_KEY is missing`
+
+Make sure `.env` exists in the project root and contains a non-empty
+`SERPAPI_API_KEY` value. Run the command from the project root.
+
+### `cloudflared: command not found`
+
+Install `cloudflared`, then confirm that `cloudflared --version` works in the
+same terminal where you run FaceChain Verifier.
+
+### `ImportError: libGL.so.1`
+
+On Ubuntu or Debian, install the OpenCV system library and retry:
+
+```bash
+sudo apt update
+sudo apt install libgl1
+```
+
+If you cannot install system packages, use an environment that already
+provides the OpenCV runtime libraries.
+
+### `Could not obtain Cloudflare tunnel URL`
+
+Check your internet connection, confirm that outbound network access is
+allowed, and try again. Quick Tunnels are temporary and can occasionally fail
+to start.
+
+### No face is detected
+
+Use a sharper image with a front-facing, visible face and adequate lighting.
+The current pipeline expects at least one detectable face.
+
+### No face-verified match is found
+
+Google Lens results change over time, thumbnails may be inaccessible, and face
+similarity depends on pose, lighting, resolution, and image quality. A search
+result alone does not guarantee a face match.
+
+## Limitations and responsible use
+
+- SerpApi and Google Lens are external services with quotas and possible costs.
+- Search results are not guaranteed to be complete, stable, or correct.
+- The similarity threshold is a heuristic, not a legal or forensic standard.
+- The local blockchain does not provide decentralized trust or immutability.
+- The input image is temporarily exposed through a public Quick Tunnel while
+  the search request is running.
+- Process only images and personal data that you are authorized to use.
+
+## Scope
+
+This repository demonstrates the following proof-of-concept flow:
+
+```text
+Face scan -> Web search -> Candidate match -> Face verification
+           -> SHA-256 fingerprint -> Local blockchain verification
+```
+
+It is a command-line demonstration; no web application is required.
+
+## License
+
+This project is provided for educational and hackathon demonstration purposes.
