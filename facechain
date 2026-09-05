@@ -1,0 +1,10 @@
+#!/bin/bash
+
+PROJECT="$HOME/Projects/facechain-verifier"
+PYTHON="$PROJECT/.venv/bin/python"
+
+cd "$PROJECT" || exit 1
+
+export PYTHONPATH="$PROJECT/src:$PROJECT"
+
+exec "$PYTHON" "$PROJECT/run.py" "$@"
